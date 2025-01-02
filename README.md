@@ -4,7 +4,7 @@
 
 `do-rec` is a versatile Bash script that automates audio recording using the `arecord` utility. It provides a variety of features, including scheduling, file splitting, custom output paths, and email notifications to keep you informed about session progress and errors.
 
-The script is ideal for long-duration recordings, such as meetings, podcasts, or monitoring sessions, and can easily integrate with local or network storage solutions.
+The script is ideal for long-duration recordings, such as birds monitoring sessions, and can easily integrate with local or network storage solutions.
 
 ---
 
