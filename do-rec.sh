@@ -53,8 +53,8 @@ CONFIG_FILE="$HOME/do-rec.ini" 			# Configuration file
 
 # Default values if no configuration file is present
 START_TIME_HHMM=""
-let TOTAL_DURATION_SECONDS=48*3600		# Default: 48 hours
-let FILE_DURATION_SECONDS=30*60			# Default: 30 minutes
+let TOTAL_DURATION_SECONDS=48*3600		# to set Default full recording windows to 48 hours
+let FILE_DURATION_SECONDS=30*60			# to set Default file size to 30 minutes
 let DEBUG=0 							# Debug mode off by default
 
 WAVPATH="$HOME/Rec/WAV/"				# Default local path
@@ -144,6 +144,38 @@ function log() {
 	fi
 }
 
+# Function to send an email with the log file content
+function send_email_log() {
+	# Arguments:
+	#   $1 - Email subject
+	if [ -z "$EMAIL_CMD" ]; then
+		echo "Warning: Email utility not available. Skipping email: $1"
+		return
+	fi
+
+	if [ -f "$LOGFILE" ]; then
+		case $EMAIL_CMD in
+			"mutt")
+				cat "$LOGFILE" | mutt -s "$1" "$LOG_EMAIL"
+				;;
+			"mail -s")
+				cat "$LOGFILE" | mail -s "$1" "$LOG_EMAIL"
+				;;
+			"sendmail")
+				(echo "Subject: $1"; cat "$LOGFILE") | sendmail "$LOG_EMAIL"
+				;;
+			"msmtp")
+				(echo "Subject: $1"; cat "$LOGFILE") | msmtp "$LOG_EMAIL"
+				;;
+			*)
+				echo "Warning: Unsupported email utility. Skipping email: $1"
+				;;
+		esac
+	else
+		echo "Warning: Log file not found, unable to send email: $1"
+	fi
+}
+
 while getopts "f:d:i:nlomrs:g:ptbh" OPT; do
 	case $OPT in
 		"f") let FILE_DURATION_SECONDS=$OPTARG*60;;
@@ -162,12 +194,27 @@ while getopts "f:d:i:nlomrs:g:ptbh" OPT; do
 	esac
 done
 
+# Detect available email utility
+if command -v mutt > /dev/null; then
+	EMAIL_CMD="mutt"
+elif command -v mail > /dev/null; then
+	EMAIL_CMD="mail -s"
+elif command -v sendmail > /dev/null; then
+	EMAIL_CMD="sendmail"
+elif command -v msmtp > /dev/null; then
+	EMAIL_CMD="msmtp"
+else
+	echo "Error: No supported email utility (mutt, mail, sendmail, msmtp) is installed. Email notifications will not work."
+	EMAIL_CMD=""
+fi
+
 clear
 let TDS=TOTAL_DURATION_SECONDS/3600
 let FDS=FILE_DURATION_SECONDS/60
 
 if [ $FILE_DURATION_SECONDS -le 0 ] || [ $TOTAL_DURATION_SECONDS -le 0 ]; then
-	echo "Error: Durations must be greater than 0." | tee >(mutt -s "ERROR Rec Session $(date +%Y.%m.%d_%Hh%Mm%Ss)" $LOG_EMAIL)
+		echo "Error: Durations must be greater than 0." | tee -a $LOGFILE
+		send_email_log "Error: Durations must be greater than 0"
 	exit 1
 fi
 
@@ -181,7 +228,7 @@ if [ -n "$START_TIME_HHMM" ]; then
 	while [ $(date +%s) -lt $START_TIME_SECONDS ]; do
 		sleep 1
 	done
-	cat $LOGFILE | mutt -s "Start Rec Scheduled Session $(date +%Y.%m.%d_%Hh%Mm%Ss)" $LOG_EMAIL
+	send_email_log "Start Rec Scheduled Session $(date +%Y.%m.%d_%Hh%Mm%Ss)"
 else
 	# If not scheduled, start now
 	let START_TIME_SECONDS=$(date +%s)
@@ -189,16 +236,15 @@ fi
 
 # calculate end time
 let END_TIME_SECONDS=$(($START_TIME_SECONDS + $TOTAL_DURATION_SECONDS))
-
 trap "echo Interrupted!; exit" SIGINT SIGTERM
 
 while [ $(date +%s) -lt $END_TIME_SECONDS ]; do
 	START_NAME=$(date +%Y.%m.%d_%Hh%Mm%Ss)
 	WAVFILE=$LOCAL$START_NAME$DEVICE_NAME.wav
 	log;
-	cat $LOGFILE | mutt -s "Rec Session Started $(date +%Y.%m.%d_%Hh%Mm%Ss)" $LOG_EMAIL
+	send_email_log "Rec Session Started $(date +%Y.%m.%d_%Hh%Mm%Ss)"
 	arecord $WAVFILE --duration=$FILE_DURATION_SECONDS --device=$DEVICE --format=S16_LE --channels=1 --rate=$RATE --vumeter=mono $( (( DEBUG == 1 )) && echo "-vv" )
 done
-cat $LOGFILE | mutt -s "Rec Session FINISHED $(date +%Y.%m.%d_%Hh%Mm%Ss)" $LOG_EMAIL
+send_email_log "Rec Session FINISHED $(date +%Y.%m.%d_%Hh%Mm%Ss)"
 
 exit 0
