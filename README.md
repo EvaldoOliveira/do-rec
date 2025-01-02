@@ -62,7 +62,7 @@ If the `do-rec.ini` file is not present, the script uses the following defaults:
 - **File Duration**: 30 minutes
 - **Sample Rate**: 48,000 Hz
 - **Output Directory**: `~/Rec/WAV/`
-- **Email for Notifications**: `evaldojr@evaldo.com`
+- **Email for Notifications**: `your-email@domain.com`
 
 ### Example `do-rec.ini`
 Here’s an example configuration file:
