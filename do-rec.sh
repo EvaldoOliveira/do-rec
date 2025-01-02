@@ -64,7 +64,7 @@ LOCAL=$WAVPATH							# Default save path
 DEVICE_NAME="_Rode"						# Device name suffix
 DEVICE="hw:CARD=II,DEV=0"				# ALSA device identifier
 let RATE=48000							# Default sample rate (48kHz)
-LOG_EMAIL="evaldojr@evaldo.com"			# Email for notifications
+LOG_EMAIL="your-email@domain.com"			# Email for notifications
 
 LOGPATH="$HOME/Rec/log/"				# Log directory
 
