@@ -49,7 +49,7 @@
 ###############################################################################################
 # Configuration Defaults
 THIS=$(basename $0)						# Script name
-CONFIG_FILE="$HOME/do-rec.ini" 			# Configuration file
+CONFIG_FILE="$HOME/Rec/do-rec.ini" 			# Configuration file
 
 # Default values if no configuration file is present
 START_TIME_HHMM=""
