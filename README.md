@@ -138,12 +138,6 @@ do-rec [options]
 
 ---
 
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
 ## Contributing
 
 Contributions are welcome! Please submit a pull request or open an issue for suggestions, bugs, or improvements.
